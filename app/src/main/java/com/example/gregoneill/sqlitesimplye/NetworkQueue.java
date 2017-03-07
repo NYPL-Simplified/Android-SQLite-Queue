@@ -13,6 +13,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Queue;
@@ -135,14 +136,33 @@ public class NetworkQueue extends SQLiteOpenHelper {
         Log.d(null, "SQLite deleted row from queue");
     }
 
-    private void performNetworkRequest(Cursor cursor) {
+    private void performNetworkRequest(final Cursor cursor) {
 
         int method = cursor.getInt(cursor.getColumnIndexOrThrow(QueueTable.COLUMN_METHOD));
         String url = cursor.getString(cursor.getColumnIndexOrThrow(QueueTable.COLUMN_URL));
         String body = cursor.getString(cursor.getColumnIndexOrThrow(QueueTable.COLUMN_PARAMETERS));
         String headers = cursor.getString(cursor.getColumnIndexOrThrow(QueueTable.COLUMN_HEADER));
 
+        String username = "gregnypl9";
+        String password = "1234";
+
         //Volley Network Request
+        final RequestQueue queue = Volley.newRequestQueue(this.context);
+        final NYPLStringRequest request = new NYPLStringRequest(method, url, username, password, null, body, new Response.Listener<String>() {
+            @Override
+            public void onResponse(final String string) {
+                //Success. Delete Row from Table.
+                SQLiteDatabase writable_db = getWritableDatabase();
+                deleteRow(writable_db, cursor.getColumnIndex(QueueTable._ID));
+                Log.d(null, string);
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(final VolleyError error) {
+                Log.d(null, error.getLocalizedMessage());
+            }
+        });
+        queue.add(request);
     }
 
 
