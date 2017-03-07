@@ -18,7 +18,9 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Queue;
 
+import static android.webkit.ConsoleMessage.MessageLevel.LOG;
 import static com.example.gregoneill.sqlitesimplye.NetworkQueueContract.QueueTable;
+import static com.sun.activation.registries.LogSupport.log;
 
 public class NetworkQueue extends SQLiteOpenHelper {
 
@@ -90,7 +92,12 @@ public class NetworkQueue extends SQLiteOpenHelper {
             newRowValues.put(QueueTable.COLUMN_RETRIES, retries);
             newRowValues.put(QueueTable.COLUMN_DATE_CREATED, currentTime);
 
-            long newRowId = db.insert(QueueTable.TABLE_NAME, null, values);
+            try {
+                long newRowId = db.insertOrThrow(QueueTable.TABLE_NAME, null, values);
+                Log.d(null, "Row successfully added to queue.");
+            } catch(Exception ex) {
+                Log.e(null, "Error adding row to SQLite DB");
+            }
         }
     }
 
@@ -114,7 +121,7 @@ public class NetworkQueue extends SQLiteOpenHelper {
         int rowID = cursor.getInt(cursor.getColumnIndexOrThrow(QueueTable._ID));
         if (retries > MAX_RETRIES_IN_QUEUE) {
             deleteRow(writable_db, rowID);
-            Log.d(null, "Removing after too many retries");
+            log("Removing after too many retries");
             return;
         }
 
