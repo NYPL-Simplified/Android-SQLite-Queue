@@ -4,6 +4,7 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
 import android.content.ContentValues;
@@ -18,9 +19,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Queue;
 
-import static android.webkit.ConsoleMessage.MessageLevel.LOG;
 import static com.example.gregoneill.sqlitesimplye.NetworkQueueContract.QueueTable;
-import static com.sun.activation.registries.LogSupport.log;
 
 public class NetworkQueue extends SQLiteOpenHelper {
 
@@ -37,8 +36,8 @@ public class NetworkQueue extends SQLiteOpenHelper {
                     QueueTable.COLUMN_UPDATE_ID + " TEXT," +
                     QueueTable.COLUMN_URL + " TEXT," +
                     QueueTable.COLUMN_METHOD + " INTEGER," +
-                    QueueTable.COLUMN_PARAMETERS + " STRING," +
-                    QueueTable.COLUMN_HEADER + " STRING," +
+                    QueueTable.COLUMN_PARAMETERS + " TEXT," +
+                    QueueTable.COLUMN_HEADER + " TEXT," +
                     QueueTable.COLUMN_RETRIES + " INTEGER," +
                     QueueTable.COLUMN_DATE_CREATED + " INTEGER)";
 
@@ -53,6 +52,7 @@ public class NetworkQueue extends SQLiteOpenHelper {
 
     public NetworkQueue(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        this.context = context;
     }
 
     public void addRequest(int libraryID,
@@ -63,7 +63,7 @@ public class NetworkQueue extends SQLiteOpenHelper {
                            String headers) {
 
         if (requestURL == null) {
-            Log.d(null, "Required parameter is missing.");
+            Log.i(null, "Required parameter is missing.");
             return;
         }
 
@@ -77,7 +77,7 @@ public class NetworkQueue extends SQLiteOpenHelper {
         //Update Row
         int count = db.update(QueueTable.TABLE_NAME, values, SQL_UPDATE_QUERY, args);
         if (count > 0) {
-            Log.d(null, "SQLite Row Updated - Success");
+            Log.i(null, "SQLite Row Updated - Success");
         } else {
             //Insert New Row
             long currentTime = System.currentTimeMillis();
@@ -94,9 +94,9 @@ public class NetworkQueue extends SQLiteOpenHelper {
 
             try {
                 long newRowId = db.insertOrThrow(QueueTable.TABLE_NAME, null, values);
-                Log.d(null, "Row successfully added to queue.");
+                Log.i(null, "SQLite Row Added - Success");
             } catch(Exception ex) {
-                Log.e(null, "Error adding row to SQLite DB");
+                Log.i(null, "Error adding row to SQLite DB");
             }
         }
     }
@@ -106,9 +106,12 @@ public class NetworkQueue extends SQLiteOpenHelper {
 
         Cursor cursor = db.query(QueueTable.TABLE_NAME, null, null, null, null, null, null, null);
 
+        int count = 1;
         while(cursor.moveToNext()) {
             //Retry request
             retryRequest(cursor);
+            Log.i(null, String.format("Retrying Request - %d", count));
+            count++;
         }
         cursor.close();
     }
@@ -119,9 +122,11 @@ public class NetworkQueue extends SQLiteOpenHelper {
 
         int retries = cursor.getInt(cursor.getColumnIndexOrThrow(QueueTable.COLUMN_RETRIES));
         int rowID = cursor.getInt(cursor.getColumnIndexOrThrow(QueueTable._ID));
+        String testString = cursor.getString(cursor.getColumnIndexOrThrow(QueueTable.COLUMN_URL));
+
         if (retries > MAX_RETRIES_IN_QUEUE) {
             deleteRow(writable_db, rowID);
-            log("Removing after too many retries");
+            Log.i(null, "Removing after too many retries");
             return;
         }
 
@@ -131,7 +136,8 @@ public class NetworkQueue extends SQLiteOpenHelper {
         ContentValues values = new ContentValues();
         values.put(QueueTable.COLUMN_RETRIES, retries);
 
-        writable_db.update(QueueTable.TABLE_NAME, values, SQL_UPDATE_BY_ID, args);
+        int result = writable_db.update(QueueTable.TABLE_NAME, values, SQL_UPDATE_BY_ID, args);
+        Log.i(null, String.format("%d Row Updated for Retry Count", result));
 
         performNetworkRequest(cursor);
     }
@@ -153,23 +159,41 @@ public class NetworkQueue extends SQLiteOpenHelper {
         String username = "gregnypl9";
         String password = "1234";
 
-        //Volley Network Request
-        final RequestQueue queue = Volley.newRequestQueue(this.context);
-        final NYPLStringRequest request = new NYPLStringRequest(method, url, username, password, null, body, new Response.Listener<String>() {
+        //Simple StringRequest
+        RequestQueue queue = Volley.newRequestQueue(this.context);
+        StringRequest stringRequest = new StringRequest(method, url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse (String response) {
+                        Log.i(null, "Success with Network Request");
+                    }
+                }, new Response.ErrorListener() {
             @Override
-            public void onResponse(final String string) {
-                //Success. Delete Row from Table.
-                SQLiteDatabase writable_db = getWritableDatabase();
-                deleteRow(writable_db, cursor.getColumnIndex(QueueTable._ID));
-                Log.d(null, string);
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(final VolleyError error) {
-                Log.d(null, error.getLocalizedMessage());
+            public void onErrorResponse(VolleyError error) {
+                Log.i(null, "Error with network request");
             }
         });
-        queue.add(request);
+        queue.add(stringRequest);
+
+
+
+//        //Volley Network Request
+//        final RequestQueue queue = Volley.newRequestQueue(this.context);
+//        final NYPLStringRequest request = new NYPLStringRequest(method, url, username, password, null, body, new Response.Listener<String>() {
+//            @Override
+//            public void onResponse(final String string) {
+//                //Success. Delete Row from Table.
+//                SQLiteDatabase writable_db = getWritableDatabase();
+//                deleteRow(writable_db, cursor.getColumnIndex(QueueTable._ID));
+//                Log.d(null, string);
+//            }
+//        }, new Response.ErrorListener() {
+//            @Override
+//            public void onErrorResponse(final VolleyError error) {
+//                Log.d(null, error.getLocalizedMessage());
+//            }
+//        });
+//        queue.add(request);
     }
 
 
