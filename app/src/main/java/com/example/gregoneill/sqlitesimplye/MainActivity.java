@@ -22,7 +22,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void testNetworkQueue() {
 
-        NetworkQueue queue = new NetworkQueue(this);
+        NYPLRequestQueue queue = new NYPLRequestQueue(this);
 
         //Create fake data for requests
         int libraryID = 0;
@@ -54,16 +54,16 @@ public class MainActivity extends AppCompatActivity {
 
         //Make sure new rows are added
         queue.addRequest(0, null, analyticsURL, 0, null, null);
-        queue.addRequest(0, null, analyticsURL, 0, null, null);
-        queue.addRequest(0, null, analyticsURL, 0, null, null);
-        queue.addRequest(0, null, analyticsURL, 0, null, null);
-        queue.addRequest(0, null, analyticsURL, 0, null, null);
-
-        //Add requests that should update a row instead of inserting a new one
-        queue.addRequest(0, updateID, analyticsURL, 0, body, null);
-        queue.addRequest(0, updateID, analyticsURL, 0, body, null);
-        queue.addRequest(0, updateID, analyticsURL, 0, body, null); //Should Update Row twice
-        queue.addRequest(1, updateID, analyticsURL, 0, body, null); //Should Add new row
+//        queue.addRequest(0, null, analyticsURL, 0, null, null);
+//        queue.addRequest(0, null, analyticsURL, 0, null, null);
+//        queue.addRequest(0, null, analyticsURL, 0, null, null);
+//        queue.addRequest(0, null, analyticsURL, 0, null, null);
+//
+//        //Add requests that should update a row instead of inserting a new one
+//        queue.addRequest(0, updateID, analyticsURL, 0, body, null);
+//        queue.addRequest(0, updateID, analyticsURL, 0, body, null);
+//        queue.addRequest(0, updateID, analyticsURL, 0, body, null); //Should Update Row twice
+//        queue.addRequest(1, updateID, analyticsURL, 0, body, null); //Should Add new row
 
         //Add Requests with a POST instead of GET
 
