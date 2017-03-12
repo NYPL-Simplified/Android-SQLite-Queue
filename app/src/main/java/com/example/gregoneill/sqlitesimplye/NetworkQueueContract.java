@@ -8,8 +8,8 @@ public final class NetworkQueueContract {
 
     public static class QueueTable implements BaseColumns {
         public static final String TABLE_NAME = "queueTable";
-        public static final String COLUMN_LIBRARY_ID = "libraryIdentifier";
-        public static final String COLUMN_UPDATE_ID = "updateIdentifier";
+        public static final String COLUMN_LIBRARY = "libraryIdentifier";
+        public static final String COLUMN_UPDATE = "updateIdentifier";
         public static final String COLUMN_URL = "requestURL";
         public static final String COLUMN_METHOD = "requestMethod";
         public static final String COLUMN_PARAMETERS = "requestParameters";

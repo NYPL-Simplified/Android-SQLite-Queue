@@ -5,6 +5,13 @@ import android.os.Bundle;
 import android.util.Log;
 
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
 import java.util.logging.Logger;
 
 import static android.webkit.ConsoleMessage.MessageLevel.LOG;
@@ -22,56 +29,37 @@ public class MainActivity extends AppCompatActivity {
 
     private void testNetworkQueue() {
 
-        NYPLRequestQueue queue = new NYPLRequestQueue(this);
+        NYPLRequestQueue nyplQueue = new NYPLRequestQueue(this);
 
-        //Create fake data for requests
-        int libraryID = 0;
-        String bookIdentifier = "urn:librarysimplified.org/terms/id/Overdrive%20ID/d9602b23-fe3e-461e-a310-dc60e6176483";
-        String annotationsURL = "https://circulation.librarysimplified.org/annotations/";
-        String analyticsURL = "https://circulation.librarysimplified.org/analytics/Overdrive/Overdrive%20ID/d9602b23-fe3e-461e-a310-dc60e6176483/open_book";
-        String updateID = "urn:librarysimplified.org/terms/id/Overdrive%20ID/d9602b23-fe3e-461e-a310-dc60e6176483";
+        //Fake network requests for POST and GET
+        //These requests can eventually go in their own class
 
-        String body = "{\n" +
-                "    \"@context\": \"http://www.w3.org/ns/anno.jsonld\",\n" +
-                "    \"motivation\": \"http://librarysimplified.org/terms/annotation/idling\",\n" +
-                "    \"target\":     {\n" +
-                "        \"selector\":         {\n" +
-                "            \"type\": \"oa:FragmentSelector\",\n" +
-                "            \"value\": \"{\\\"idref\\\":\\\"cover\\\",\\\"contentCFI\\\":\\\"/4/2[cov]/2/2\\\"}\"\n" +
-                "        },\n" +
-                "        \"source\": \"urn:librarysimplified.org/terms/id/Overdrive%20ID/8cddd0b7-c6cd-4f04-9ee2-3655b051a64c\"\n" +
-                "    },\n" +
-                "    \"type\": \"Annotation\"\n" +
-                "}";
+        String url = "http://www.mocky.io/v2/58c49e31100000c123eef42b";
 
+        //Simple StringRequest
+        RequestQueue requestQueue = Volley.newRequestQueue(this);
+        StringRequest stringRequest = new StringRequest(StringRequest.Method.GET, url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse (String response) {
+                        Log.i(null, "Success with Network Request");
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.i(null, "Error with network request");
+                    }
+        });
+        requestQueue.add(stringRequest);
 
-        //Add them all to the SQLiteQueue
-
-//        queue.addRequest(0, null, annotationsURL, 0, body, null);
-//        queue.addRequest(1, null, annotationsURL, 0, body, null);
-//        queue.addRequest(2, null, annotationsURL, 0, body, null);
-//        queue.addRequest(3, null, annotationsURL, 0, body, null);
+        //In response listener, put through NYPLRequestQueue to see if it should be saved
 
         //Make sure new rows are added
-        queue.addRequest(0, null, analyticsURL, 0, null, null);
-//        queue.addRequest(0, null, analyticsURL, 0, null, null);
-//        queue.addRequest(0, null, analyticsURL, 0, null, null);
-//        queue.addRequest(0, null, analyticsURL, 0, null, null);
-//        queue.addRequest(0, null, analyticsURL, 0, null, null);
-//
-//        //Add requests that should update a row instead of inserting a new one
-//        queue.addRequest(0, updateID, analyticsURL, 0, body, null);
-//        queue.addRequest(0, updateID, analyticsURL, 0, body, null);
-//        queue.addRequest(0, updateID, analyticsURL, 0, body, null); //Should Update Row twice
-//        queue.addRequest(1, updateID, analyticsURL, 0, body, null); //Should Add new row
 
-        //Add Requests with a POST instead of GET
+        //Add requests that should update a row instead of inserting a new one
 
         //Attempt to retry queue
-        queue.retryQueue();
-
         //If a retry is successful, make sure it is removed from the queue
-
         //If a retry is not successful, make sure it remains in the queue, with the retry count incremented
 
         //Once a retry has reached its count limit, make sure it's removed from the queue

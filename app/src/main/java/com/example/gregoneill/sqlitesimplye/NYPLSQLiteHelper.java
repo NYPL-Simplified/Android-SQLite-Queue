@@ -14,23 +14,34 @@ public class NYPLSQLiteHelper extends SQLiteOpenHelper {
     public static final int DATABASE_VERSION = 1;
     public static final String DATABASE_NAME = "NetworkQueue.db";
 
+    public static final String TABLE_NAME = "queueTable";
+    public static final String COLUMN_ID = "columnID";
+    public static final String COLUMN_LIBRARY = "libraryIdentifier";
+    public static final String COLUMN_UPDATE = "updateIdentifier";
+    public static final String COLUMN_URL = "requestURL";
+    public static final String COLUMN_METHOD = "requestMethod";
+    public static final String COLUMN_PARAMETERS = "requestParameters";
+    public static final String COLUMN_HEADER = "requestHeader";
+    public static final String COLUMN_RETRIES = "retryCount";
+    public static final String COLUMN_DATE_CREATED = "dateCreated";
+
     private static final String SQL_CREATE_ENTRIES =
-            "CREATE TABLE " + NetworkQueueContract.QueueTable.TABLE_NAME + " (" +
-                    NetworkQueueContract.QueueTable._ID + " INTEGER PRIMARY KEY," +
-                    NetworkQueueContract.QueueTable.COLUMN_LIBRARY_ID + " INTEGER," +
-                    NetworkQueueContract.QueueTable.COLUMN_UPDATE_ID + " TEXT," +
-                    NetworkQueueContract.QueueTable.COLUMN_URL + " TEXT," +
-                    NetworkQueueContract.QueueTable.COLUMN_METHOD + " INTEGER," +
-                    NetworkQueueContract.QueueTable.COLUMN_PARAMETERS + " TEXT," +
-                    NetworkQueueContract.QueueTable.COLUMN_HEADER + " TEXT," +
-                    NetworkQueueContract.QueueTable.COLUMN_RETRIES + " INTEGER," +
-                    NetworkQueueContract.QueueTable.COLUMN_DATE_CREATED + " INTEGER)";
+            "CREATE TABLE " + TABLE_NAME + " (" +
+                    COLUMN_ID + " INTEGER PRIMARY KEY," +
+                    COLUMN_LIBRARY + " INTEGER," +
+                    COLUMN_UPDATE + " TEXT," +
+                    COLUMN_URL + " TEXT," +
+                    COLUMN_METHOD + " INTEGER," +
+                    COLUMN_PARAMETERS + " TEXT," +
+                    COLUMN_HEADER + " TEXT," +
+                    COLUMN_RETRIES + " INTEGER," +
+                    COLUMN_DATE_CREATED + " INTEGER)";
 
     private static final String SQL_DELETE_ALL_ENTRIES =
             "DROP TABLE IF EXISTS " + NetworkQueueContract.QueueTable.TABLE_NAME;
 
-    private static final String SQL_UPDATE_QUERY = NetworkQueueContract.QueueTable.COLUMN_LIBRARY_ID + " = ? AND " +
-            NetworkQueueContract.QueueTable.COLUMN_UPDATE_ID + " = ? AND " + NetworkQueueContract.QueueTable.COLUMN_UPDATE_ID + " IS NOT NULL";
+    private static final String SQL_UPDATE_QUERY = COLUMN_LIBRARY + " = ? AND " +
+            COLUMN_UPDATE + " = ? AND " + COLUMN_UPDATE + " IS NOT NULL";
 
     private static final String SQL_UPDATE_BY_ID = NetworkQueueContract.QueueTable._ID + " = ?";
 
