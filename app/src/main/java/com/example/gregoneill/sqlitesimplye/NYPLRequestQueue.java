@@ -42,13 +42,13 @@ public class NYPLRequestQueue {
                            String headers) {
 
 //        if (request should be queued) {
-            this.databaseHelper.addRequest(libraryID, updateID, requestURL, method, json, headers);
+            databaseHelper.addRequest(libraryID, updateID, requestURL, method, json, headers);
 //        }
     }
 
     public void retryQueue() {
 
-        Cursor cursor = this.databaseHelper.retryQueue();
+        Cursor cursor = databaseHelper.retryQueue();
 
         int count = 1;
         cursor.moveToFirst();
@@ -67,12 +67,12 @@ public class NYPLRequestQueue {
         int rowID = cursor.getInt(cursor.getColumnIndexOrThrow(QueueTable._ID));
 
         if (retries > MAX_RETRIES_IN_QUEUE) {
-            this.databaseHelper.deleteRow(rowID);
+            databaseHelper.deleteRow(rowID);
             Log.i(null, "Removing after too many retries");
             return;
         }
 
-        this.databaseHelper.incrementRetryCount(cursor);
+        databaseHelper.incrementRetryCount(cursor);
 
         performNetworkRequest(cursor);
     }
@@ -82,34 +82,30 @@ public class NYPLRequestQueue {
         //This can be refactored into its own class if there is one class for all networking
         //TODO: Listeners currently not working
 
-//        int method = cursor.getInt(cursor.getColumnIndexOrThrow(QueueTable.COLUMN_METHOD));
-//        String url = cursor.getString(cursor.getColumnIndexOrThrow(QueueTable.COLUMN_URL));
-//        String body = cursor.getString(cursor.getColumnIndexOrThrow(QueueTable.COLUMN_PARAMETERS));
+        int method = cursor.getInt(cursor.getColumnIndexOrThrow(QueueTable.COLUMN_METHOD));
+        String url = cursor.getString(cursor.getColumnIndexOrThrow(QueueTable.COLUMN_URL));
+        String body = cursor.getString(cursor.getColumnIndexOrThrow(QueueTable.COLUMN_PARAMETERS));
 //        String headers = cursor.getString(cursor.getColumnIndexOrThrow(QueueTable.COLUMN_HEADER));
-//
-//        String username = "gregnypl9";
-//        String password = "1234";
-//
-//        //Simple StringRequest
-//        RequestQueue queue = Volley.newRequestQueue(this.context);
-//        StringRequest stringRequest = new StringRequest(method, url,
-//                new Response.Listener<String>() {
-//                    @Override
-//                    public void onResponse (String response) {
-//                        Log.i(null, "Success with Network Request");
-//                    }
-//                }, new Response.ErrorListener() {
-//                    @Override
-//                    public void onErrorResponse(VolleyError error) {
-//                        Log.i(null, "Error with network request");
-//                    }
-//        });
-//        queue.add(stringRequest);
 
+        String username = "gregnypl9";
+        String password = "1234";
+
+        //Simple StringRequest
+        RequestQueue queue = Volley.newRequestQueue(this.context);
+        StringRequest stringRequest = new StringRequest(method, url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse (String response) {
+                        Log.i(null, "Success with Network Request");
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.i(null, "Error with network request");
+                    }
+        });
+        queue.add(stringRequest);
     }
-
-
-
 }
 
 //Since getWritableDatabase() and getReadableDatabase() are expensive to call when the database is closed,
