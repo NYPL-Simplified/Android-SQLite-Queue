@@ -38,12 +38,12 @@ public class NYPLSQLiteHelper extends SQLiteOpenHelper {
                     COLUMN_DATE_CREATED + " INTEGER)";
 
     private static final String SQL_DELETE_ALL_ENTRIES =
-            "DROP TABLE IF EXISTS " + NetworkQueueContract.QueueTable.TABLE_NAME;
+            "DROP TABLE IF EXISTS " + NYPLSQLiteHelper.TABLE_NAME;
 
     private static final String SQL_UPDATE_QUERY = COLUMN_LIBRARY + " = ? AND " +
             COLUMN_UPDATE + " = ? AND " + COLUMN_UPDATE + " IS NOT NULL";
 
-    private static final String SQL_UPDATE_BY_ID = NetworkQueueContract.QueueTable._ID + " = ?";
+    private static final String SQL_UPDATE_BY_ID = NYPLSQLiteHelper.COLUMN_ID + " = ?";
 
 
 
@@ -68,11 +68,11 @@ public class NYPLSQLiteHelper extends SQLiteOpenHelper {
         String[] args = { String.valueOf(libraryID), updateID };
 
         ContentValues values = new ContentValues();
-        values.put(NetworkQueueContract.QueueTable.COLUMN_PARAMETERS, json);
-        values.put(NetworkQueueContract.QueueTable.COLUMN_HEADER, headers);
+        values.put(COLUMN_PARAMETERS, json);
+        values.put(COLUMN_HEADER, headers);
 
         //Update Row
-        int count = db.update(NetworkQueueContract.QueueTable.TABLE_NAME, values, SQL_UPDATE_QUERY, args);
+        int count = db.update(TABLE_NAME, values, SQL_UPDATE_QUERY, args);
         if (count > 0) {
             Log.i(null, "SQLite Row Updated - Success");
         } else {
@@ -80,17 +80,17 @@ public class NYPLSQLiteHelper extends SQLiteOpenHelper {
             long currentTime = System.currentTimeMillis();
             int retries = 0;
             ContentValues newRowValues = new ContentValues();
-            newRowValues.put(NetworkQueueContract.QueueTable.COLUMN_LIBRARY_ID, libraryID);
-            newRowValues.put(NetworkQueueContract.QueueTable.COLUMN_UPDATE_ID, updateID);
-            newRowValues.put(NetworkQueueContract.QueueTable.COLUMN_URL, requestURL);
-            newRowValues.put(NetworkQueueContract.QueueTable.COLUMN_METHOD, method);
-            newRowValues.put(NetworkQueueContract.QueueTable.COLUMN_PARAMETERS, json);
-            newRowValues.put(NetworkQueueContract.QueueTable.COLUMN_HEADER, headers);
-            newRowValues.put(NetworkQueueContract.QueueTable.COLUMN_RETRIES, retries);
-            newRowValues.put(NetworkQueueContract.QueueTable.COLUMN_DATE_CREATED, currentTime);
+            newRowValues.put(COLUMN_LIBRARY, libraryID);
+            newRowValues.put(COLUMN_UPDATE, updateID);
+            newRowValues.put(COLUMN_URL, requestURL);
+            newRowValues.put(COLUMN_METHOD, method);
+            newRowValues.put(COLUMN_PARAMETERS, json);
+            newRowValues.put(COLUMN_HEADER, headers);
+            newRowValues.put(COLUMN_RETRIES, retries);
+            newRowValues.put(COLUMN_DATE_CREATED, currentTime);
 
             try {
-                long newRowId = db.insertOrThrow(NetworkQueueContract.QueueTable.TABLE_NAME, null, newRowValues);
+                long newRowId = db.insertOrThrow(TABLE_NAME, null, newRowValues);
                 Log.i(null, "SQLite Row Added - Success");
             } catch(Exception ex) {
                 Log.i(null, "Error adding row to SQLite DB");
@@ -100,21 +100,21 @@ public class NYPLSQLiteHelper extends SQLiteOpenHelper {
 
     public Cursor retryQueue() {
         SQLiteDatabase db = this.getReadableDatabase();
-        return db.query(NetworkQueueContract.QueueTable.TABLE_NAME, null, null, null, null, null, null, null);
+        return db.query(TABLE_NAME, null, null, null, null, null, null, null);
     }
 
     public void deleteRow(int row) {
         SQLiteDatabase writable_db = getWritableDatabase();
-        String selection = NetworkQueueContract.QueueTable._ID + " = ?";
+        String selection = NYPLSQLiteHelper.COLUMN_ID + " = ?";
         String[] selectionArgs = { String.valueOf(row) };
-        writable_db.delete(NetworkQueueContract.QueueTable.TABLE_NAME, selection, selectionArgs);
+        writable_db.delete(TABLE_NAME, selection, selectionArgs);
         Log.d(null, "SQLite deleted row from queue");
     }
 
     public void incrementRetryCount(Cursor cursor) {
 
-        int retries = cursor.getInt(cursor.getColumnIndexOrThrow(NetworkQueueContract.QueueTable.COLUMN_RETRIES));
-        int rowID = cursor.getInt(cursor.getColumnIndexOrThrow(NetworkQueueContract.QueueTable._ID));
+        int retries = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_RETRIES));
+        int rowID = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_ID));
 
         SQLiteDatabase writable_db = getWritableDatabase();
 
@@ -122,10 +122,10 @@ public class NYPLSQLiteHelper extends SQLiteOpenHelper {
         retries++;
         String[] args = { String.valueOf(rowID) };
         ContentValues values = new ContentValues();
-        values.put(NetworkQueueContract.QueueTable.COLUMN_RETRIES, retries);
+        values.put(NYPLSQLiteHelper.COLUMN_RETRIES, retries);
 
-        int result = writable_db.update(NetworkQueueContract.QueueTable.TABLE_NAME, values, SQL_UPDATE_BY_ID, args);
-        Log.i(null, String.format("%d Row Updated for Retry Count", result));
+        int result = writable_db.update(TABLE_NAME, values, SQL_UPDATE_BY_ID, args);
+        Log.i(null, String.format("%d Row Updated to increment Retries", result));
     }
 
     //SQLiteOpenHelper Methods

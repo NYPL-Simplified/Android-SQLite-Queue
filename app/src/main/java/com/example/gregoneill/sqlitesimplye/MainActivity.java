@@ -18,7 +18,7 @@ import static android.webkit.ConsoleMessage.MessageLevel.LOG;
 
 public class MainActivity extends AppCompatActivity {
 
-    private NYPLRequestQueue nyplQueue;
+    private NYPLRequestQueue nyplRequestQueue;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void testNetworkQueue() {
 
-        nyplQueue = new NYPLRequestQueue(this);
+        nyplRequestQueue = new NYPLRequestQueue(this);
 
         //Fake network requests for POST and GET
 
@@ -52,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
 
         //Attempt to retry queue
 
-        nyplQueue.retryQueue();
+        nyplRequestQueue.retryQueue();
 
         //If a retry is successful, make sure it is removed from the queue
         //If a retry is not successful, make sure it remains in the queue, with the retry count incremented
@@ -65,27 +65,29 @@ public class MainActivity extends AppCompatActivity {
 
         final String url = "http://www.mocky.io/v2/58c49e31100000c123eef42b";
         final String updateID;
-        if (update == true) {
+        if (update) {
             updateID = "sample";
         } else {
             updateID = null;
         }
 
+        nyplRequestQueue.addRequest(library, updateID, url, method, null, null); //TODO temp
+
         //Simple StringRequest
-        RequestQueue requestQueue = Volley.newRequestQueue(this);
-        StringRequest stringRequest = new StringRequest(method, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse (String response) {
-                    Log.i(null, "Network Request Success");
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                    nyplQueue.addRequest(library, updateID, url, method, null, null);
-                    Log.i(null, "Network Request Error");
-            }
-        });
-        requestQueue.add(stringRequest);
+//        RequestQueue requestQueue = Volley.newRequestQueue(this);
+//        StringRequest stringRequest = new StringRequest(method, url,
+//                new Response.Listener<String>() {
+//                    @Override
+//                    public void onResponse (String response) {
+//                        Log.i(null, "Network Request Success");
+//                    }
+//                }, new Response.ErrorListener() {
+//            @Override
+//            public void onErrorResponse(VolleyError error) {
+//                    nyplRequestQueue.addRequest(library, updateID, url, method, null, null);
+//                    Log.i(null, "Network Request Error");
+//            }
+//        });
+//        requestQueue.add(stringRequest);
     }
 }

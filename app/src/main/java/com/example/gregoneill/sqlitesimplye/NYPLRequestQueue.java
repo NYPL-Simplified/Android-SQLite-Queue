@@ -19,8 +19,6 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Queue;
 
-import static com.example.gregoneill.sqlitesimplye.NetworkQueueContract.QueueTable;
-
 public class NYPLRequestQueue {
 
     private Context context;
@@ -31,7 +29,7 @@ public class NYPLRequestQueue {
 
     public NYPLRequestQueue(Context context) {
         this.context = context;
-        this.databaseHelper = new NYPLSQLiteHelper();
+        this.databaseHelper = new NYPLSQLiteHelper(context);
     }
 
     public void addRequest(int libraryID,
@@ -53,9 +51,7 @@ public class NYPLRequestQueue {
         int count = 1;
         cursor.moveToFirst();
         while(cursor.isAfterLast() == false) {
-            //Retry request
             retryRequest(cursor);
-            Log.i(null, String.format("Retrying Request - %d", count));
             cursor.moveToNext();
             count++;
         }
@@ -63,8 +59,8 @@ public class NYPLRequestQueue {
     }
 
     private void retryRequest(Cursor cursor) {
-        int retries = cursor.getInt(cursor.getColumnIndexOrThrow(NetworkQueueContract.QueueTable.COLUMN_RETRIES));
-        int rowID = cursor.getInt(cursor.getColumnIndexOrThrow(QueueTable._ID));
+        int retries = cursor.getInt(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_RETRIES));
+        int rowID = cursor.getInt(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_ID));
 
         if (retries > MAX_RETRIES_IN_QUEUE) {
             databaseHelper.deleteRow(rowID);
@@ -74,7 +70,9 @@ public class NYPLRequestQueue {
 
         databaseHelper.incrementRetryCount(cursor);
 
-        performNetworkRequest(cursor);
+        databaseHelper.deleteRow(rowID);
+
+//        performNetworkRequest(cursor);
     }
 
     private void performNetworkRequest(final Cursor cursor) {
@@ -82,10 +80,10 @@ public class NYPLRequestQueue {
         //This can be refactored into its own class if there is one class for all networking
         //TODO: Listeners currently not working
 
-        int method = cursor.getInt(cursor.getColumnIndexOrThrow(QueueTable.COLUMN_METHOD));
-        String url = cursor.getString(cursor.getColumnIndexOrThrow(QueueTable.COLUMN_URL));
-        String body = cursor.getString(cursor.getColumnIndexOrThrow(QueueTable.COLUMN_PARAMETERS));
-//        String headers = cursor.getString(cursor.getColumnIndexOrThrow(QueueTable.COLUMN_HEADER));
+        int method = cursor.getInt(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_METHOD));
+        String url = cursor.getString(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_URL));
+        String body = cursor.getString(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_PARAMETERS));
+//        String headers = cursor.getString(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_HEADER));
 
         String username = "gregnypl9";
         String password = "1234";
@@ -96,11 +94,13 @@ public class NYPLRequestQueue {
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse (String response) {
+
                         Log.i(null, "Success with Network Request");
                     }
                 }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
+
                         Log.i(null, "Error with network request");
                     }
         });
