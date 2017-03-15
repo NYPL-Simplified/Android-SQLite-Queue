@@ -107,8 +107,8 @@ public class NYPLSQLiteHelper extends SQLiteOpenHelper {
         SQLiteDatabase writable_db = getWritableDatabase();
         String selection = NYPLSQLiteHelper.COLUMN_ID + " = ?";
         String[] selectionArgs = { String.valueOf(row) };
-        writable_db.delete(TABLE_NAME, selection, selectionArgs);
-        Log.d(null, "SQLite deleted row from queue");
+        int result = writable_db.delete(TABLE_NAME, selection, selectionArgs);
+        Log.i(null, "SQLite deleted row from queue");
     }
 
     public void incrementRetryCount(Cursor cursor) {

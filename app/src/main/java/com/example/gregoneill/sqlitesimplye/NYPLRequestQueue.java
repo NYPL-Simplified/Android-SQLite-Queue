@@ -70,9 +70,7 @@ public class NYPLRequestQueue {
 
         databaseHelper.incrementRetryCount(cursor);
 
-        databaseHelper.deleteRow(rowID);
-
-//        performNetworkRequest(cursor);
+        performNetworkRequest(cursor);
     }
 
     private void performNetworkRequest(final Cursor cursor) {
@@ -80,6 +78,7 @@ public class NYPLRequestQueue {
         //This can be refactored into its own class if there is one class for all networking
         //TODO: Listeners currently not working
 
+        final int rowID = cursor.getInt(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_ID));
         int method = cursor.getInt(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_METHOD));
         String url = cursor.getString(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_URL));
         String body = cursor.getString(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_PARAMETERS));
@@ -94,14 +93,13 @@ public class NYPLRequestQueue {
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse (String response) {
-
                         Log.i(null, "Success with Network Request");
+                        databaseHelper.deleteRow(rowID);
                     }
                 }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-
-                        Log.i(null, "Error with network request");
+                        Log.i(null, "Error with network request. Staying in queue.");
                     }
         });
         queue.add(stringRequest);

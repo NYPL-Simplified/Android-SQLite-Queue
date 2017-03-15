@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
         networkRequest(0, methodTypeGet, true);
         networkRequest(1, methodTypeGet, true);     //Different ID: insert, not update
 
-        //Attempt to retry queue
+        //Attempt to retry queue (when online)
 
         nyplRequestQueue.retryQueue();
 
