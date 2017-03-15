@@ -1,37 +1,28 @@
 package com.example.gregoneill.sqlitesimplye;
 
-import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-
-import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
-
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.Queue;
 
 public class NYPLRequestQueue {
 
     private Context context;
     private NYPLSQLiteHelper databaseHelper;
 
-    public static final int MAX_RETRIES_IN_QUEUE = 5;
-
+    private static final int MAX_RETRIES_IN_QUEUE = 5;
 
     public NYPLRequestQueue(Context context) {
         this.context = context;
         this.databaseHelper = new NYPLSQLiteHelper(context);
     }
 
+    /// For Activities and Network Requests that should support offline saving,
+    /// this method should be used in place of a custom or NYPLStringRequest.
     public void queueRequest(int libraryID,
                              String updateID,
                              String requestURL,
@@ -39,9 +30,7 @@ public class NYPLRequestQueue {
                              String json,
                              String headers) {
 
-//        if (request should be queued) {
-            networkRequest(null, libraryID, updateID, requestURL, method, json, headers);
-//        }
+            networkRequest(false, 0, libraryID, updateID, requestURL, method, json, headers);
     }
 
     public void retryQueue() {
@@ -59,11 +48,13 @@ public class NYPLRequestQueue {
     }
 
     private void retryQueuedRequest(Cursor cursor) {
+
         int retries = cursor.getInt(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_RETRIES));
+        int row = cursor.getInt(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_ID));
 
         if (retries > MAX_RETRIES_IN_QUEUE) {
-            databaseHelper.deleteRow(cursor);
-            Log.i(null, "Removing after too many retries");
+            databaseHelper.deleteRow(row);
+            Log.i("NYPL", "Removing after too many retries");
             return;
         }
 
@@ -72,23 +63,22 @@ public class NYPLRequestQueue {
     }
 
     private void retryNetworkRequest(final Cursor cursor) {
-        final int rowID = cursor.getInt(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_ID));
-        int method = cursor.getInt(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_METHOD));
+
+        //Decode any necessary columns to retry request
+        //TODO handle JSON and Auth Headers
+        int rowID = cursor.getInt(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_ID));
         String url = cursor.getString(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_URL));
-        String body = cursor.getString(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_PARAMETERS));
+        int method = cursor.getInt(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_METHOD));
         int libraryID = cursor.getInt(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_LIBRARY));
         String updateID = cursor.getString(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_UPDATE));
-//        String headers = cursor.getString(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_HEADER));
 
-        //temp
-        String username = "gregnypl9";
-        String password = "1234";
-
-        networkRequest(cursor, libraryID, updateID, url, method, null, null); //temp
+        networkRequest(true, rowID, libraryID, updateID, url, method, null, null); //temp
     }
 
-    //This can be refactored into its own class if there is one class for all networking
-    private void networkRequest(final Cursor cursor,
+    // Used to perform network request for first time, or retry a request already in the queue.
+    // Performs work accordingly in response listener.
+    private void networkRequest(final boolean isRetry,
+                                final int rowID,
                                 final int libraryID,
                                 final String updateID,
                                 final String requestURL,
@@ -96,24 +86,23 @@ public class NYPLRequestQueue {
                                 final String json,
                                 final String headers) {
 
-        //Simple StringRequest
         RequestQueue queue = Volley.newRequestQueue(this.context);
         StringRequest stringRequest = new StringRequest(method, requestURL,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse (String response) {
-                        Log.i(null, "Success with Network Request");
-                        if (cursor != null) {
-                            databaseHelper.deleteRow(cursor);
+                        Log.i("NYPL", "Success with Network Request");
+                        if (isRetry) {
+                            databaseHelper.deleteRow(rowID);
                         }
                     }
                 }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        if (cursor != null) {
-                            Log.i(null, "Error retrying request. Staying in queue.");
+                        if (isRetry) {
+                            Log.i("NYPL", "Error retrying request. Staying in queue.");
                         } else {
-                            Log.i(null, "Error with request. Adding to queue.");
+                            Log.i("NYPL", "Error with request. Adding to queue.");
                             databaseHelper.saveRequest(libraryID, updateID, requestURL, method, json, headers);
                         }
                     }

@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+///
 public class NYPLSQLiteHelper extends SQLiteOpenHelper {
 
     private Context context;
@@ -46,7 +47,6 @@ public class NYPLSQLiteHelper extends SQLiteOpenHelper {
     private static final String SQL_UPDATE_BY_ID = NYPLSQLiteHelper.COLUMN_ID + " = ?";
 
 
-
     public NYPLSQLiteHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
         this.context = context;
@@ -59,21 +59,20 @@ public class NYPLSQLiteHelper extends SQLiteOpenHelper {
                             String json,
                             String headers) {
 
-        Log.i(null, "Saving to queue...");
-
         if (requestURL == null) {
-            Log.i(null, "Required parameter to save is missing.");
+            Log.i("NYPL", "Required parameter to save is missing.");
             return;
         }
 
         SQLiteDatabase db = getWritableDatabase();
         String[] args = { String.valueOf(libraryID), updateID };
 
+        //TODO update to ensure JSON and Headers are serialized correctly
         ContentValues values = new ContentValues();
         values.put(COLUMN_PARAMETERS, json);
         values.put(COLUMN_HEADER, headers);
 
-        //Update Row
+        //Try Updating Row
         int count = db.update(TABLE_NAME, values, SQL_UPDATE_QUERY, args);
         if (count > 0) {
             Log.i(null, "SQLite - Row Updated");
@@ -92,10 +91,10 @@ public class NYPLSQLiteHelper extends SQLiteOpenHelper {
             newRowValues.put(COLUMN_DATE_CREATED, currentTime);
 
             try {
-                long newRowId = db.insertOrThrow(TABLE_NAME, null, newRowValues);
-                Log.i(null, "SQLite - Row Added");
+                db.insertOrThrow(TABLE_NAME, null, newRowValues);
+                Log.i("NYPL", "SQLite - Row Added");
             } catch(Exception ex) {
-                Log.e(null, "SQLite - Error Adding Row");
+                Log.e("NYPL", "SQLite - Error Adding Row");
             }
         }
     }
@@ -105,14 +104,12 @@ public class NYPLSQLiteHelper extends SQLiteOpenHelper {
         return db.query(TABLE_NAME, null, null, null, null, null, null, null);
     }
 
-    public void deleteRow(Cursor cursor) {
-        int row = cursor.getInt(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_ID));
-
+    public void deleteRow(int row) {
         SQLiteDatabase writable_db = getWritableDatabase();
         String selection = NYPLSQLiteHelper.COLUMN_ID + " = ?";
         String[] selectionArgs = { String.valueOf(row) };
-        int result = writable_db.delete(TABLE_NAME, selection, selectionArgs);
-        Log.i(null, "SQLite - Row Deleted");
+        writable_db.delete(TABLE_NAME, selection, selectionArgs);
+        Log.i("NYPL", "SQLite - Row Deleted");
     }
 
     public void incrementRetryCount(Cursor cursor) {
@@ -129,7 +126,7 @@ public class NYPLSQLiteHelper extends SQLiteOpenHelper {
         values.put(NYPLSQLiteHelper.COLUMN_RETRIES, retries);
 
         int result = writable_db.update(TABLE_NAME, values, SQL_UPDATE_BY_ID, args);
-        Log.i(null, String.format("SQLite - %d Retry Incremented", result));
+        Log.i("NYPL", String.format("SQLite - Retry Incremented to %d", retries));
     }
 
     //SQLiteOpenHelper Methods

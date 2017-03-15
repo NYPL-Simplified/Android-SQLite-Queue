@@ -32,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
 
         nyplRequestQueue = new NYPLRequestQueue(this);
 
+        //Test Criteria
         //Fake network requests for POST and GET
 
         final int methodTypeGet = StringRequest.Method.GET;
@@ -46,12 +47,13 @@ public class MainActivity extends AppCompatActivity {
 
         //Add requests that should update a row instead of inserting a new one
 
-        networkRequest(0, methodTypeGet, true);
-        networkRequest(0, methodTypeGet, true);
-        networkRequest(1, methodTypeGet, true);     //Different ID: insert, not update
+        networkRequest(0, methodTypeGet, true);     //Should Insert
+        networkRequest(0, methodTypeGet, true);     //Should Update
+        networkRequest(1, methodTypeGet, true);     //Should Insert
 
         //Attempt to retry queue (when online)
 
+        //TODO find better home for retryQueue() when integrated into app
         nyplRequestQueue.retryQueue();
 
         //If a retry is successful, make sure it is removed from the queue
@@ -59,10 +61,10 @@ public class MainActivity extends AppCompatActivity {
         //Once a retry has reached its count limit, make sure it's removed from the queue
     }
 
-    //These requests can eventually go in their own class
-
+    //Testing NYPLRequestQueue
     private void networkRequest(final int library, final int method, boolean update) {
 
+        //Mocked Data and Response API
         final String url = "http://www.mocky.io/v2/58c49e31100000c123eef42b";
         final String updateID;
         if (update) {
