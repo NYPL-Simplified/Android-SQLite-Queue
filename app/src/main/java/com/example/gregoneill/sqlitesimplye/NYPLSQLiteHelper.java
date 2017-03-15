@@ -52,15 +52,17 @@ public class NYPLSQLiteHelper extends SQLiteOpenHelper {
         this.context = context;
     }
 
-    public void addRequest(int libraryID,
-                           String updateID,
-                           String requestURL,
-                           int method,
-                           String json,
-                           String headers) {
+    public void saveRequest(int libraryID,
+                            String updateID,
+                            String requestURL,
+                            int method,
+                            String json,
+                            String headers) {
+
+        Log.i(null, "Saving to queue...");
 
         if (requestURL == null) {
-            Log.i(null, "Required parameter is missing.");
+            Log.i(null, "Required parameter to save is missing.");
             return;
         }
 
@@ -74,7 +76,7 @@ public class NYPLSQLiteHelper extends SQLiteOpenHelper {
         //Update Row
         int count = db.update(TABLE_NAME, values, SQL_UPDATE_QUERY, args);
         if (count > 0) {
-            Log.i(null, "SQLite Row Updated - Success");
+            Log.i(null, "SQLite - Row Updated");
         } else {
             //Insert New Row
             long currentTime = System.currentTimeMillis();
@@ -91,9 +93,9 @@ public class NYPLSQLiteHelper extends SQLiteOpenHelper {
 
             try {
                 long newRowId = db.insertOrThrow(TABLE_NAME, null, newRowValues);
-                Log.i(null, "SQLite Row Added - Success");
+                Log.i(null, "SQLite - Row Added");
             } catch(Exception ex) {
-                Log.i(null, "Error adding row to SQLite DB");
+                Log.e(null, "SQLite - Error Adding Row");
             }
         }
     }
@@ -103,12 +105,14 @@ public class NYPLSQLiteHelper extends SQLiteOpenHelper {
         return db.query(TABLE_NAME, null, null, null, null, null, null, null);
     }
 
-    public void deleteRow(int row) {
+    public void deleteRow(Cursor cursor) {
+        int row = cursor.getInt(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_ID));
+
         SQLiteDatabase writable_db = getWritableDatabase();
         String selection = NYPLSQLiteHelper.COLUMN_ID + " = ?";
         String[] selectionArgs = { String.valueOf(row) };
         int result = writable_db.delete(TABLE_NAME, selection, selectionArgs);
-        Log.i(null, "SQLite deleted row from queue");
+        Log.i(null, "SQLite - Row Deleted");
     }
 
     public void incrementRetryCount(Cursor cursor) {
@@ -125,7 +129,7 @@ public class NYPLSQLiteHelper extends SQLiteOpenHelper {
         values.put(NYPLSQLiteHelper.COLUMN_RETRIES, retries);
 
         int result = writable_db.update(TABLE_NAME, values, SQL_UPDATE_BY_ID, args);
-        Log.i(null, String.format("%d Row Updated to increment Retries", result));
+        Log.i(null, String.format("SQLite - %d Retry Incremented", result));
     }
 
     //SQLiteOpenHelper Methods
@@ -142,3 +146,13 @@ public class NYPLSQLiteHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 }
+
+//Since getWritableDatabase() and getReadableDatabase() are expensive to call when the database is closed,
+//you should leave your database connection open for as long as you possibly need to access it.
+//Typically, it is optimal to close the database in the onDestroy() of the calling Activity.
+//
+//@Override
+//protected void onDestroy() {
+//   mDbHelper.close();
+//   super.onDestroy();
+//}

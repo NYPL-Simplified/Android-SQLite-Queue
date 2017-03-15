@@ -71,23 +71,6 @@ public class MainActivity extends AppCompatActivity {
             updateID = null;
         }
 
-        nyplRequestQueue.addRequest(library, updateID, url, method, null, null); //TODO temp
-
-        //Simple StringRequest
-//        RequestQueue requestQueue = Volley.newRequestQueue(this);
-//        StringRequest stringRequest = new StringRequest(method, url,
-//                new Response.Listener<String>() {
-//                    @Override
-//                    public void onResponse (String response) {
-//                        Log.i(null, "Network Request Success");
-//                    }
-//                }, new Response.ErrorListener() {
-//            @Override
-//            public void onErrorResponse(VolleyError error) {
-//                    nyplRequestQueue.addRequest(library, updateID, url, method, null, null);
-//                    Log.i(null, "Network Request Error");
-//            }
-//        });
-//        requestQueue.add(stringRequest);
+        nyplRequestQueue.queueRequest(library, updateID, url, method, null, null);
     }
 }

@@ -32,15 +32,15 @@ public class NYPLRequestQueue {
         this.databaseHelper = new NYPLSQLiteHelper(context);
     }
 
-    public void addRequest(int libraryID,
-                           String updateID,
-                           String requestURL,
-                           int method,
-                           String json,
-                           String headers) {
+    public void queueRequest(int libraryID,
+                             String updateID,
+                             String requestURL,
+                             int method,
+                             String json,
+                             String headers) {
 
 //        if (request should be queued) {
-            databaseHelper.addRequest(libraryID, updateID, requestURL, method, json, headers);
+            networkRequest(null, libraryID, updateID, requestURL, method, json, headers);
 //        }
     }
 
@@ -51,68 +51,73 @@ public class NYPLRequestQueue {
         int count = 1;
         cursor.moveToFirst();
         while(cursor.isAfterLast() == false) {
-            retryRequest(cursor);
+            retryQueuedRequest(cursor);
             cursor.moveToNext();
             count++;
         }
         cursor.close();
     }
 
-    private void retryRequest(Cursor cursor) {
+    private void retryQueuedRequest(Cursor cursor) {
         int retries = cursor.getInt(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_RETRIES));
-        int rowID = cursor.getInt(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_ID));
 
         if (retries > MAX_RETRIES_IN_QUEUE) {
-            databaseHelper.deleteRow(rowID);
+            databaseHelper.deleteRow(cursor);
             Log.i(null, "Removing after too many retries");
             return;
         }
 
         databaseHelper.incrementRetryCount(cursor);
-
-        performNetworkRequest(cursor);
+        retryNetworkRequest(cursor);
     }
 
-    private void performNetworkRequest(final Cursor cursor) {
-
-        //This can be refactored into its own class if there is one class for all networking
-        //TODO: Listeners currently not working
-
+    private void retryNetworkRequest(final Cursor cursor) {
         final int rowID = cursor.getInt(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_ID));
         int method = cursor.getInt(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_METHOD));
         String url = cursor.getString(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_URL));
         String body = cursor.getString(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_PARAMETERS));
+        int libraryID = cursor.getInt(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_LIBRARY));
+        String updateID = cursor.getString(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_UPDATE));
 //        String headers = cursor.getString(cursor.getColumnIndexOrThrow(NYPLSQLiteHelper.COLUMN_HEADER));
 
+        //temp
         String username = "gregnypl9";
         String password = "1234";
 
+        networkRequest(cursor, libraryID, updateID, url, method, null, null); //temp
+    }
+
+    //This can be refactored into its own class if there is one class for all networking
+    private void networkRequest(final Cursor cursor,
+                                final int libraryID,
+                                final String updateID,
+                                final String requestURL,
+                                final int method,
+                                final String json,
+                                final String headers) {
+
         //Simple StringRequest
         RequestQueue queue = Volley.newRequestQueue(this.context);
-        StringRequest stringRequest = new StringRequest(method, url,
+        StringRequest stringRequest = new StringRequest(method, requestURL,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse (String response) {
                         Log.i(null, "Success with Network Request");
-                        databaseHelper.deleteRow(rowID);
+                        if (cursor != null) {
+                            databaseHelper.deleteRow(cursor);
+                        }
                     }
                 }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        Log.i(null, "Error with network request. Staying in queue.");
+                        if (cursor != null) {
+                            Log.i(null, "Error retrying request. Staying in queue.");
+                        } else {
+                            Log.i(null, "Error with request. Adding to queue.");
+                            databaseHelper.saveRequest(libraryID, updateID, requestURL, method, json, headers);
+                        }
                     }
         });
         queue.add(stringRequest);
     }
 }
-
-//Since getWritableDatabase() and getReadableDatabase() are expensive to call when the database is closed,
-//you should leave your database connection open for as long as you possibly need to access it.
-//Typically, it is optimal to close the database in the onDestroy() of the calling Activity.
-//
-//@Override
-//protected void onDestroy() {
-//   mDbHelper.close();
-//   super.onDestroy();
-//}
-
