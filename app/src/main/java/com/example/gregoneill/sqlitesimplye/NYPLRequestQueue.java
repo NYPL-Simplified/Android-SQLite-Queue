@@ -109,4 +109,8 @@ public class NYPLRequestQueue {
         });
         queue.add(stringRequest);
     }
+
+    public void close() {
+        databaseHelper.close();
+    }
 }

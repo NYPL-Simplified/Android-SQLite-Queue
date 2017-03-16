@@ -28,6 +28,12 @@ public class MainActivity extends AppCompatActivity {
         testNetworkQueue();
     }
 
+    @Override
+    protected void onDestroy() {
+        nyplRequestQueue.close();
+        super.onDestroy();
+    }
+
     private void testNetworkQueue() {
 
         nyplRequestQueue = new NYPLRequestQueue(this);
