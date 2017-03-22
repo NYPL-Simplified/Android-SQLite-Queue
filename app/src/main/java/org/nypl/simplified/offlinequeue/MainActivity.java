@@ -1,24 +1,17 @@
-package com.example.gregoneill.sqlitesimplye;
+package org.nypl.simplified.offlinequeue;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
+import android.support.v7.app.AppCompatActivity;
 
-
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 
-import java.util.logging.Logger;
-
-import static android.webkit.ConsoleMessage.MessageLevel.LOG;
+import org.nypl.simplified.R;
 
 public class MainActivity extends AppCompatActivity {
 
-    private NYPLRequestQueue nyplRequestQueue;
+    private String TAG = this.getClass().getName();
+
+    private NYPLRequestQueue request_queue;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,13 +23,13 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        nyplRequestQueue.close();
+        request_queue.close();
         super.onDestroy();
     }
 
     private void testNetworkQueue() {
 
-        nyplRequestQueue = new NYPLRequestQueue(this);
+        this.request_queue = new NYPLRequestQueue(this);
 
         //Test Criteria
         //Fake network requests for POST and GET
@@ -59,8 +52,7 @@ public class MainActivity extends AppCompatActivity {
 
         //Attempt to retry queue (when online)
 
-        //TODO find better home for retryQueue() when integrated into app
-        nyplRequestQueue.retryQueue();
+        this.request_queue.retryQueue();
 
         //If a retry is successful, make sure it is removed from the queue
         //If a retry is not successful, make sure it remains in the queue, with the retry count incremented
@@ -79,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
             updateID = null;
         }
 
-        nyplRequestQueue.queueRequest(library, updateID, url, method, null, null);
+        request_queue.queueRequest(library, updateID, url, method, null, null); //TODO temp
+
     }
 }
