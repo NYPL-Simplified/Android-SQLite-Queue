@@ -15,7 +15,7 @@ public class NYPLVolley {
 
     private static RequestQueue request_queue;
 
-    public static RequestQueue getRequestQueue() {
+    private static RequestQueue getRequestQueue() {
         if (request_queue != null) {
             return request_queue;
         }
@@ -23,6 +23,7 @@ public class NYPLVolley {
             throw new IllegalStateException("RequestQueue not initialized");
         }
     }
+
     public static void add(Request request)
     {
         getRequestQueue().add(request);

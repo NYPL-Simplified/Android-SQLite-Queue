@@ -14,8 +14,7 @@ public class NYPLRequestQueue {
 
     private String TAG = this.getClass().getName();
 
-    private static final int MAX_RETRIES_IN_QUEUE = 5;
-//    private Context context;
+    private static final int MAX_RETRIES_IN_QUEUE = 0;
     private NYPLSQLiteHelper database_helper;
 
     public NYPLRequestQueue(NYPLSQLiteHelper in_database_helper) {
@@ -24,7 +23,7 @@ public class NYPLRequestQueue {
 
     /// For Activities and Network Requests that should support offline saving,
     /// this method should be used in place of a custom or NYPLStringRequest.
-    public void queueRequest(int library_id,
+    public void add(int library_id,
                              String update_id,
                              String request_url,
                              int method,
@@ -36,30 +35,33 @@ public class NYPLRequestQueue {
 
     public void retryQueue() {
 
+        Log.d(TAG, "retryQueue");
+
         Cursor cursor = this.database_helper.retryQueue();
 
-        cursor.moveToFirst();
-        while (!cursor.isAfterLast()) {
-            retryQueuedRequest(cursor);
-            cursor.moveToNext();
+
+        if (cursor.moveToFirst()) {
+            do {
+
+                Log.d(TAG, "while");
+
+                retryNetworkRequest(cursor);
+                this.database_helper.incrementRetryCount(cursor);
+
+                int retries = cursor.getInt(cursor.getColumnIndexOrThrow(OfflineQueueModel.COLUMN_RETRIES));
+                int row = cursor.getInt(cursor.getColumnIndexOrThrow(OfflineQueueModel.COLUMN_ID));
+                Log.d(TAG, String.format("retries %s",retries));
+
+                if (retries > MAX_RETRIES_IN_QUEUE) {
+                    this.database_helper.deleteRow(row);
+                    Log.d(TAG, "Removing after too many retries");
+                }
+
+            } while (cursor.moveToNext());
         }
-        cursor.close();
+
     }
 
-    private void retryQueuedRequest(Cursor cursor) {
-
-        int retries = cursor.getInt(cursor.getColumnIndexOrThrow(OfflineQueueModel.COLUMN_RETRIES));
-        int row = cursor.getInt(cursor.getColumnIndexOrThrow(OfflineQueueModel.COLUMN_ID));
-
-        if (retries > MAX_RETRIES_IN_QUEUE) {
-            this.database_helper.deleteRow(row);
-            Log.d(TAG, "Removing after too many retries");
-            return;
-        }
-
-        this.database_helper.incrementRetryCount(cursor);
-        retryNetworkRequest(cursor);
-    }
 
     private void retryNetworkRequest(final Cursor cursor) {
 
@@ -82,6 +84,7 @@ public class NYPLRequestQueue {
                                 final int method,
                                 final String json,
                                 final String headers) {
+
 
         StringRequest request = new StringRequest(method, request_url,
                 new Response.Listener<String>() {
@@ -106,7 +109,5 @@ public class NYPLRequestQueue {
         NYPLVolley.add(request);
     }
 
-    public void close() {
-        this.database_helper.close();
-    }
+
 }
