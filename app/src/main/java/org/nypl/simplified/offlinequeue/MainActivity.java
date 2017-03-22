@@ -3,7 +3,7 @@ package org.nypl.simplified.offlinequeue;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 
-import com.android.volley.toolbox.StringRequest;
+import com.android.volley.Request;
 
 import org.nypl.simplified.R;
 
@@ -29,26 +29,22 @@ public class MainActivity extends AppCompatActivity {
 
     private void testNetworkQueue() {
 
-        this.request_queue = new NYPLRequestQueue(this);
+        NYPLSQLiteHelper database_helper = new NYPLSQLiteHelper(getApplicationContext());
 
-        //Test Criteria
-        //Fake network requests for POST and GET
+        this.request_queue = new NYPLRequestQueue(database_helper);
 
-        final int methodTypeGet = StringRequest.Method.GET;
-        final int methodTypePost = StringRequest.Method.POST;
 
         //Make sure new rows are added
-
-        networkRequest(0, methodTypeGet, false);
-        networkRequest(0, methodTypeGet, false);
-        networkRequest(0, methodTypeGet, false);
-        networkRequest(0, methodTypePost, false);
+        networkRequest(0, Request.Method.GET, false);
+        networkRequest(0, Request.Method.GET, false);
+        networkRequest(0, Request.Method.GET, false);
+        networkRequest(0, Request.Method.POST, false);
 
         //Add requests that should update a row instead of inserting a new one
 
-        networkRequest(0, methodTypeGet, true);     //Should Insert
-        networkRequest(0, methodTypeGet, true);     //Should Update
-        networkRequest(1, methodTypeGet, true);     //Should Insert
+        networkRequest(0, Request.Method.GET, true);     //Should Insert
+        networkRequest(0, Request.Method.GET, true);     //Should Update
+        networkRequest(1, Request.Method.GET, true);     //Should Insert
 
         //Attempt to retry queue (when online)
 
@@ -71,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
             updateID = null;
         }
 
-        request_queue.queueRequest(library, updateID, url, method, null, null); //TODO temp
+        request_queue.queueRequest(library, updateID, url, method, null, null);
 
     }
 }
